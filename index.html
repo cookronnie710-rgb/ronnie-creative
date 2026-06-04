@@ -1,0 +1,1455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarkov Progression Tracker</title>
+<style>
+  :root {
+    --bg: #0d0d0d;
+    --surface: #141414;
+    --card: #1c1c1c;
+    --border: #2a2a2a;
+    --gold: #c8a45c;
+    --gold-dim: #8a6f3a;
+    --green: #4a7c59;
+    --green-bright: #6ab87f;
+    --red: #8b3a3a;
+    --text: #d4cfc8;
+    --text-dim: #7a756e;
+    --text-muted: #4a4540;
+    --accent: #c8a45c;
+    --tab-active: #1e1a14;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Courier New', Courier, monospace;
+    min-height: 100vh;
+    font-size: 14px;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 20px 12px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .logo-icon {
+    width: 36px;
+    height: 36px;
+    background: var(--gold);
+    clip-path: polygon(50% 0%, 95% 25%, 95% 75%, 50% 100%, 5% 75%, 5% 25%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: #0d0d0d;
+    font-weight: bold;
+    flex-shrink: 0;
+  }
+  .logo-text h1 {
+    font-size: 18px;
+    color: var(--gold);
+    letter-spacing: 3px;
+    font-weight: bold;
+    text-transform: uppercase;
+  }
+  .logo-text p {
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .header-stats {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .stat-chip {
+    text-align: center;
+  }
+  .stat-chip .label {
+    font-size: 9px;
+    color: var(--text-muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .stat-chip .value {
+    font-size: 16px;
+    color: var(--gold);
+    font-weight: bold;
+  }
+
+  /* ── KAPPA BAR ── */
+  .kappa-bar-wrap {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 10px 14px;
+  }
+  .kappa-bar-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .kappa-bar-label span:first-child {
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--gold);
+    text-transform: uppercase;
+  }
+  .kappa-bar-label span:last-child {
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+  .kappa-bar-track {
+    height: 8px;
+    background: #0d0d0d;
+    border-radius: 1px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .kappa-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold-dim), var(--gold));
+    border-radius: 1px;
+    transition: width 0.4s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .kappa-bar-fill::after {
+    content: '';
+    position: absolute;
+    top: 0; right: 0; bottom: 0;
+    width: 30px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15));
+  }
+
+  /* ── TABS ── */
+  .tabs {
+    display: flex;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 20px;
+    gap: 2px;
+    overflow-x: auto;
+  }
+  .tab-btn {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    padding: 10px 20px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active {
+    color: var(--gold);
+    border-bottom-color: var(--gold);
+    background: var(--tab-active);
+  }
+  .tab-btn .count-badge {
+    display: inline-block;
+    background: var(--border);
+    color: var(--text-dim);
+    border-radius: 2px;
+    padding: 1px 5px;
+    font-size: 9px;
+    margin-left: 6px;
+  }
+  .tab-btn.active .count-badge { background: var(--gold-dim); color: #0d0d0d; }
+
+  /* ── CONTENT ── */
+  .content {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ── FILTER BAR ── */
+  .filter-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .search-input {
+    flex: 1;
+    min-width: 180px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 12px;
+    font-family: inherit;
+    font-size: 12px;
+    border-radius: 2px;
+    outline: none;
+  }
+  .search-input:focus { border-color: var(--gold-dim); }
+  .search-input::placeholder { color: var(--text-muted); }
+  .filter-btn {
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 7px 12px;
+    font-family: inherit;
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.2s;
+  }
+  .filter-btn:hover, .filter-btn.active { border-color: var(--gold-dim); color: var(--gold); }
+  .reset-btn {
+    background: none;
+    border: 1px solid var(--red);
+    color: var(--red);
+    padding: 7px 12px;
+    font-family: inherit;
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.2s;
+    margin-left: auto;
+  }
+  .reset-btn:hover { background: var(--red); color: #fff; }
+
+  /* ── TRADER SECTION ── */
+  .trader-section {
+    margin-bottom: 12px;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .trader-header {
+    display: flex;
+    align-items: center;
+    padding: 10px 14px;
+    cursor: pointer;
+    background: var(--card);
+    user-select: none;
+    gap: 10px;
+  }
+  .trader-header:hover { background: #222; }
+  .trader-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .trader-name {
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: bold;
+    flex: 1;
+  }
+  .trader-progress {
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+  .trader-progress .done { color: var(--green-bright); }
+  .trader-chevron {
+    color: var(--text-muted);
+    font-size: 12px;
+    transition: transform 0.2s;
+  }
+  .trader-section.collapsed .trader-chevron { transform: rotate(-90deg); }
+  .trader-mini-bar {
+    height: 2px;
+    background: var(--border);
+    width: 60px;
+    border-radius: 1px;
+    overflow: hidden;
+  }
+  .trader-mini-fill {
+    height: 100%;
+    border-radius: 1px;
+    transition: width 0.3s;
+  }
+
+  /* ── QUEST LIST ── */
+  .quest-list {
+    border-top: 1px solid var(--border);
+  }
+  .trader-section.collapsed .quest-list { display: none; }
+  .quest-item {
+    display: flex;
+    align-items: center;
+    padding: 9px 14px 9px 20px;
+    border-bottom: 1px solid #1a1a1a;
+    gap: 10px;
+    transition: background 0.15s;
+  }
+  .quest-item:last-child { border-bottom: none; }
+  .quest-item:hover { background: #1a1a1a; }
+  .quest-item.completed { opacity: 0.5; }
+  .quest-item.completed .quest-name { text-decoration: line-through; }
+  .quest-item.hidden { display: none; }
+  .quest-checkbox {
+    width: 16px;
+    height: 16px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    border-radius: 1px;
+    flex-shrink: 0;
+    cursor: pointer;
+    position: relative;
+    appearance: none;
+    -webkit-appearance: none;
+    transition: all 0.15s;
+  }
+  .quest-checkbox:checked {
+    background: var(--green);
+    border-color: var(--green-bright);
+  }
+  .quest-checkbox:checked::after {
+    content: '✓';
+    position: absolute;
+    top: -2px;
+    left: 1px;
+    font-size: 12px;
+    color: var(--green-bright);
+  }
+  .quest-name {
+    flex: 1;
+    font-size: 13px;
+    color: var(--text);
+  }
+  .quest-level {
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+  }
+
+  /* ── HIDEOUT ── */
+  .hideout-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 12px;
+  }
+  .station-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .station-header {
+    padding: 10px 14px;
+    background: #1a1a1a;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .station-header:hover { background: #222; }
+  .station-icon { font-size: 18px; }
+  .station-name {
+    flex: 1;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+  .station-progress-text {
+    font-size: 10px;
+    color: var(--text-dim);
+  }
+  .station-body { border-top: 1px solid var(--border); }
+  .station-card.collapsed .station-body { display: none; }
+  .station-level {
+    border-bottom: 1px solid #1a1a1a;
+    padding: 8px 14px;
+  }
+  .station-level:last-child { border-bottom: none; }
+  .level-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  .level-label {
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .level-done-badge {
+    font-size: 9px;
+    background: var(--green);
+    color: var(--green-bright);
+    padding: 1px 5px;
+    border-radius: 1px;
+    display: none;
+  }
+  .station-level.level-complete .level-done-badge { display: inline; }
+  .item-list { display: flex; flex-direction: column; gap: 4px; }
+  .item-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 3px 0;
+  }
+  .item-checkbox {
+    width: 14px;
+    height: 14px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    border-radius: 1px;
+    flex-shrink: 0;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    position: relative;
+    transition: all 0.15s;
+  }
+  .item-checkbox:checked {
+    background: var(--gold-dim);
+    border-color: var(--gold);
+  }
+  .item-checkbox:checked::after {
+    content: '✓';
+    position: absolute;
+    top: -2px;
+    left: 0px;
+    font-size: 11px;
+    color: var(--gold);
+  }
+  .item-name {
+    flex: 1;
+    font-size: 12px;
+    color: var(--text);
+  }
+  .item-qty {
+    font-size: 11px;
+    color: var(--text-dim);
+    white-space: nowrap;
+  }
+  .item-row.item-checked .item-name { text-decoration: line-through; color: var(--text-muted); }
+
+  /* ── SECTION PROGRESS BAR ── */
+  .section-bar-wrap { margin-bottom: 16px; }
+  .section-bar-track {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 4px;
+  }
+  .section-bar-fill {
+    height: 100%;
+    background: var(--green-bright);
+    border-radius: 2px;
+    transition: width 0.3s;
+  }
+  .section-bar-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-muted);
+    font-size: 12px;
+    letter-spacing: 1px;
+  }
+
+  @media (max-width: 600px) {
+    .header-stats { gap: 12px; }
+    .content { padding: 12px; }
+    .hideout-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-top">
+    <div class="logo">
+      <div class="logo-icon">T</div>
+      <div class="logo-text">
+        <h1>Tarkov Tracker</h1>
+        <p>Progression &amp; Quest Log</p>
+      </div>
+    </div>
+    <div class="header-stats">
+      <div class="stat-chip">
+        <div class="label">Kappa</div>
+        <div class="value" id="stat-kappa">0%</div>
+      </div>
+      <div class="stat-chip">
+        <div class="label">Main</div>
+        <div class="value" id="stat-main">0/0</div>
+      </div>
+      <div class="stat-chip">
+        <div class="label">Side</div>
+        <div class="value" id="stat-side">0/0</div>
+      </div>
+      <div class="stat-chip">
+        <div class="label">Hideout</div>
+        <div class="value" id="stat-hideout">0%</div>
+      </div>
+    </div>
+  </div>
+  <div class="kappa-bar-wrap">
+    <div class="kappa-bar-label">
+      <span>&#9670; Kappa Container Progress</span>
+      <span id="kappa-label-text">0 / 0 quests completed</span>
+    </div>
+    <div class="kappa-bar-track">
+      <div class="kappa-bar-fill" id="kappa-bar" style="width:0%"></div>
+    </div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('main')">
+    &#9632; Main Story <span class="count-badge" id="tab-main-badge">0</span>
+  </button>
+  <button class="tab-btn" onclick="switchTab('side')">
+    &#9632; Side Quests <span class="count-badge" id="tab-side-badge">0</span>
+  </button>
+  <button class="tab-btn" onclick="switchTab('hideout')">
+    &#9632; Hideout <span class="count-badge" id="tab-hideout-badge">0</span>
+  </button>
+</div>
+
+<!-- CONTENT -->
+<div class="content">
+
+  <!-- MAIN STORY TAB -->
+  <div class="tab-panel active" id="panel-main">
+    <div class="filter-bar">
+      <input type="text" class="search-input" placeholder="Search quests..." oninput="filterQuests('main', this.value)">
+      <button class="filter-btn active" onclick="setFilter('main','all',this)">All</button>
+      <button class="filter-btn" onclick="setFilter('main','incomplete',this)">Incomplete</button>
+      <button class="filter-btn" onclick="setFilter('main','complete',this)">Completed</button>
+      <button class="reset-btn" onclick="resetTab('main')">Reset Tab</button>
+    </div>
+    <div class="section-bar-wrap">
+      <div class="section-bar-label">
+        <span>Main Story Progress</span>
+        <span id="main-progress-text">0 / 0</span>
+      </div>
+      <div class="section-bar-track">
+        <div class="section-bar-fill" id="main-bar" style="width:0%"></div>
+      </div>
+    </div>
+    <div id="main-traders"></div>
+  </div>
+
+  <!-- SIDE QUESTS TAB -->
+  <div class="tab-panel" id="panel-side">
+    <div class="filter-bar">
+      <input type="text" class="search-input" placeholder="Search quests..." oninput="filterQuests('side', this.value)">
+      <button class="filter-btn active" onclick="setFilter('side','all',this)">All</button>
+      <button class="filter-btn" onclick="setFilter('side','incomplete',this)">Incomplete</button>
+      <button class="filter-btn" onclick="setFilter('side','complete',this)">Completed</button>
+      <button class="reset-btn" onclick="resetTab('side')">Reset Tab</button>
+    </div>
+    <div class="section-bar-wrap">
+      <div class="section-bar-label">
+        <span>Side Quest Progress</span>
+        <span id="side-progress-text">0 / 0</span>
+      </div>
+      <div class="section-bar-track">
+        <div class="section-bar-fill" id="side-bar" style="width:0%"></div>
+      </div>
+    </div>
+    <div id="side-traders"></div>
+  </div>
+
+  <!-- HIDEOUT TAB -->
+  <div class="tab-panel" id="panel-hideout">
+    <div class="filter-bar">
+      <input type="text" class="search-input" placeholder="Search items or stations..." oninput="filterHideout(this.value)">
+      <button class="reset-btn" onclick="resetTab('hideout')">Reset Tab</button>
+    </div>
+    <div class="section-bar-wrap">
+      <div class="section-bar-label">
+        <span>Hideout Upgrade Items Gathered</span>
+        <span id="hideout-progress-text">0 / 0</span>
+      </div>
+      <div class="section-bar-track">
+        <div class="section-bar-fill" id="hideout-bar" style="width:0%"></div>
+      </div>
+    </div>
+    <div class="hideout-grid" id="hideout-grid"></div>
+  </div>
+
+</div>
+
+<script>
+// ════════════════════════════════════════════════
+//  DATA
+// ════════════════════════════════════════════════
+
+const TRADERS = {
+  Prapor:      '#e05555',
+  Therapist:   '#55a0e0',
+  Skier:       '#e0a055',
+  Peacekeeper: '#5577e0',
+  Mechanic:    '#8855e0',
+  Ragman:      '#e05599',
+  Jaeger:      '#55a055',
+  Fence:       '#aaaaaa',
+  Lightkeeper: '#e0cc55',
+};
+
+// Each quest: { id, trader, name, kappa }
+// kappa: true = required for Kappa container
+const QUESTS = [
+  // ── PRAPOR ──────────────────────────────────────────────
+  { id:'p01', trader:'Prapor', name:'Debut',                           kappa:true  },
+  { id:'p02', trader:'Prapor', name:'Shooting Cans',                   kappa:true  },
+  { id:'p03', trader:'Prapor', name:'Checking',                        kappa:true  },
+  { id:'p04', trader:'Prapor', name:'Big Customer',                    kappa:true  },
+  { id:'p05', trader:'Prapor', name:'Supply Plans',                    kappa:true  },
+  { id:'p06', trader:'Prapor', name:'Delivery from the Past',          kappa:true  },
+  { id:'p07', trader:'Prapor', name:'Bad Habit',                       kappa:true  },
+  { id:'p08', trader:'Prapor', name:'Supplier',                        kappa:true  },
+  { id:'p09', trader:'Prapor', name:'Regulated Materials',             kappa:true  },
+  { id:'p10', trader:'Prapor', name:'Ice Cream Cones',                 kappa:true  },
+  { id:'p11', trader:'Prapor', name:'Gold Egret',                      kappa:true  },
+  { id:'p12', trader:'Prapor', name:'Polikhim Hive',                   kappa:true  },
+  { id:'p13', trader:'Prapor', name:'Stirrup',                         kappa:true  },
+  { id:'p14', trader:'Prapor', name:'Cargo X - Part 1',                kappa:true  },
+  { id:'p15', trader:'Prapor', name:'Cargo X - Part 2',                kappa:true  },
+  { id:'p16', trader:'Prapor', name:'Cargo X - Part 3',                kappa:true  },
+  { id:'p17', trader:'Prapor', name:'Cargo X - Part 4',                kappa:true  },
+  { id:'p18', trader:'Prapor', name:'A Matter of Principle',           kappa:true  },
+  { id:'p19', trader:'Prapor', name:'Chemical - Part 1',               kappa:true  },
+  { id:'p20', trader:'Prapor', name:'Chemical - Part 2',               kappa:true  },
+  { id:'p21', trader:'Prapor', name:'Chemical - Part 3',               kappa:true  },
+  { id:'p22', trader:'Prapor', name:'Chemical - Part 4',               kappa:true  },
+  { id:'p23', trader:'Prapor', name:'Slaughterhouse',                  kappa:true  },
+  { id:'p24', trader:'Prapor', name:'Pest Control',                    kappa:true  },
+  { id:'p25', trader:'Prapor', name:'Quick Sand',                      kappa:true  },
+  // Prapor side
+  { id:'ps1', trader:'Prapor', name:'The Tarkov Shooter - Part 1',     kappa:false },
+  { id:'ps2', trader:'Prapor', name:'The Tarkov Shooter - Part 2',     kappa:false },
+  { id:'ps3', trader:'Prapor', name:'The Tarkov Shooter - Part 3',     kappa:false },
+  { id:'ps4', trader:'Prapor', name:'The Tarkov Shooter - Part 4',     kappa:false },
+  { id:'ps5', trader:'Prapor', name:'The Tarkov Shooter - Part 5',     kappa:false },
+  { id:'ps6', trader:'Prapor', name:'The Tarkov Shooter - Part 6',     kappa:false },
+  { id:'ps7', trader:'Prapor', name:'The Tarkov Shooter - Part 7',     kappa:false },
+  { id:'ps8', trader:'Prapor', name:'The Tarkov Shooter - Part 8',     kappa:false },
+
+  // ── THERAPIST ────────────────────────────────────────────
+  { id:'t01', trader:'Therapist', name:'First in Line',                kappa:true  },
+  { id:'t02', trader:'Therapist', name:'Shortage',                     kappa:true  },
+  { id:'t03', trader:'Therapist', name:'Sanitary Standards - Part 1',  kappa:true  },
+  { id:'t04', trader:'Therapist', name:'Sanitary Standards - Part 2',  kappa:true  },
+  { id:'t05', trader:'Therapist', name:'Postman Pat - Part 1',         kappa:true  },
+  { id:'t06', trader:'Therapist', name:'Postman Pat - Part 2',         kappa:true  },
+  { id:'t07', trader:'Therapist', name:'Humanitarian Supplies',        kappa:true  },
+  { id:'t08', trader:'Therapist', name:'An Overdose',                  kappa:true  },
+  { id:'t09', trader:'Therapist', name:'Search Mission',               kappa:true  },
+  { id:'t10', trader:'Therapist', name:'The Cult - Part 1',            kappa:true  },
+  { id:'t11', trader:'Therapist', name:'The Cult - Part 2',            kappa:true  },
+  { id:'t12', trader:'Therapist', name:'Disease History',              kappa:true  },
+  { id:'t13', trader:'Therapist', name:'Health Care Privacy - Part 1', kappa:true  },
+  { id:'t14', trader:'Therapist', name:'Health Care Privacy - Part 2', kappa:true  },
+  { id:'t15', trader:'Therapist', name:'Health Care Privacy - Part 3', kappa:true  },
+  { id:'t16', trader:'Therapist', name:'Health Care Privacy - Part 4', kappa:true  },
+  { id:'t17', trader:'Therapist', name:'Health Care Privacy - Part 5', kappa:true  },
+  { id:'t18', trader:'Therapist', name:'Operation Aquarius - Part 1',  kappa:true  },
+  { id:'t19', trader:'Therapist', name:'Operation Aquarius - Part 2',  kappa:true  },
+  { id:'t20', trader:'Therapist', name:'Trust Regain',                 kappa:true  },
+  { id:'t21', trader:'Therapist', name:'Colleagues - Part 1',          kappa:true  },
+  { id:'t22', trader:'Therapist', name:'Colleagues - Part 2',          kappa:true  },
+  { id:'t23', trader:'Therapist', name:'Colleagues - Part 3',          kappa:true  },
+  // Therapist side
+  { id:'ts1', trader:'Therapist', name:'Spa Tour - Part 1',            kappa:false },
+  { id:'ts2', trader:'Therapist', name:'Spa Tour - Part 2',            kappa:false },
+  { id:'ts3', trader:'Therapist', name:'Spa Tour - Part 3',            kappa:false },
+  { id:'ts4', trader:'Therapist', name:'Spa Tour - Part 4',            kappa:false },
+  { id:'ts5', trader:'Therapist', name:'Spa Tour - Part 5',            kappa:false },
+  { id:'ts6', trader:'Therapist', name:'Spa Tour - Part 6',            kappa:false },
+  { id:'ts7', trader:'Therapist', name:'Spa Tour - Part 7',            kappa:false },
+
+  // ── SKIER ────────────────────────────────────────────────
+  { id:'sk01', trader:'Skier', name:'Cold Blooded',                    kappa:true  },
+  { id:'sk02', trader:'Skier', name:'Untouchable',                     kappa:true  },
+  { id:'sk03', trader:'Skier', name:'Merchandising',                   kappa:true  },
+  { id:'sk04', trader:'Skier', name:"What's on the Market?",           kappa:true  },
+  { id:'sk05', trader:'Skier', name:'Farming - Part 1',                kappa:true  },
+  { id:'sk06', trader:'Skier', name:'Farming - Part 2',                kappa:true  },
+  { id:'sk07', trader:'Skier', name:'Farming - Part 3',                kappa:true  },
+  { id:'sk08', trader:'Skier', name:'Farming - Part 4',                kappa:true  },
+  { id:'sk09', trader:'Skier', name:'The Tarkov Arms Race',            kappa:true  },
+  { id:'sk10', trader:'Skier', name:'Rigged Game',                     kappa:true  },
+  { id:'sk11', trader:'Skier', name:'Contraband',                      kappa:true  },
+  { id:'sk12', trader:'Skier', name:'Punisher - Part 1',               kappa:true  },
+  { id:'sk13', trader:'Skier', name:'Punisher - Part 2',               kappa:true  },
+  { id:'sk14', trader:'Skier', name:'Punisher - Part 3',               kappa:true  },
+  { id:'sk15', trader:'Skier', name:'Punisher - Part 4',               kappa:true  },
+  { id:'sk16', trader:'Skier', name:'Punisher - Part 5',               kappa:true  },
+  { id:'sk17', trader:'Skier', name:'Punisher - Part 6',               kappa:true  },
+  { id:'sk18', trader:'Skier', name:'Chemical - Part 1',               kappa:true  },
+  // Skier side
+  { id:'sks1', trader:'Skier', name:'Acquaintance',                    kappa:false },
+  { id:'sks2', trader:'Skier', name:'Car Repair',                      kappa:false },
+  { id:'sks3', trader:'Skier', name:'Iron Works',                      kappa:false },
+
+  // ── PEACEKEEPER ──────────────────────────────────────────
+  { id:'pk01', trader:'Peacekeeper', name:'Seaside Vacation',          kappa:true  },
+  { id:'pk02', trader:'Peacekeeper', name:'Fishing Gear',              kappa:true  },
+  { id:'pk03', trader:'Peacekeeper', name:'Friend from the West - Part 1', kappa:true },
+  { id:'pk04', trader:'Peacekeeper', name:'Friend from the West - Part 2', kappa:true },
+  { id:'pk05', trader:'Peacekeeper', name:'A Satisfied Customer',      kappa:true  },
+  { id:'pk06', trader:'Peacekeeper', name:'Signal - Part 1',           kappa:true  },
+  { id:'pk07', trader:'Peacekeeper', name:'Broadcast - Part 1',        kappa:true  },
+  { id:'pk08', trader:'Peacekeeper', name:'Broadcast - Part 2',        kappa:true  },
+  { id:'pk09', trader:'Peacekeeper', name:'Patriot',                   kappa:true  },
+  { id:'pk10', trader:'Peacekeeper', name:'The Guide',                 kappa:true  },
+  { id:'pk11', trader:'Peacekeeper', name:'Escort',                    kappa:true  },
+  { id:'pk12', trader:'Peacekeeper', name:'Something to Talk About',   kappa:true  },
+  { id:'pk13', trader:'Peacekeeper', name:'Humanitarian Supplies',     kappa:true  },
+  // Peacekeeper side
+  { id:'pks1', trader:'Peacekeeper', name:'Wet Job - Part 1',          kappa:false },
+  { id:'pks2', trader:'Peacekeeper', name:'Wet Job - Part 2',          kappa:false },
+  { id:'pks3', trader:'Peacekeeper', name:'Wet Job - Part 3',          kappa:false },
+  { id:'pks4', trader:'Peacekeeper', name:'Wet Job - Part 4',          kappa:false },
+  { id:'pks5', trader:'Peacekeeper', name:'Wet Job - Part 5',          kappa:false },
+  { id:'pks6', trader:'Peacekeeper', name:'Wet Job - Part 6',          kappa:false },
+
+  // ── MECHANIC ─────────────────────────────────────────────
+  { id:'mc01', trader:'Mechanic', name:'Gunsmith - Part 1',            kappa:true  },
+  { id:'mc02', trader:'Mechanic', name:'Gunsmith - Part 2',            kappa:true  },
+  { id:'mc03', trader:'Mechanic', name:'Gunsmith - Part 3',            kappa:true  },
+  { id:'mc04', trader:'Mechanic', name:'Gunsmith - Part 4',            kappa:true  },
+  { id:'mc05', trader:'Mechanic', name:'Gunsmith - Part 5',            kappa:true  },
+  { id:'mc06', trader:'Mechanic', name:'Gunsmith - Part 6',            kappa:true  },
+  { id:'mc07', trader:'Mechanic', name:'Gunsmith - Part 7',            kappa:true  },
+  { id:'mc08', trader:'Mechanic', name:'Gunsmith - Part 8',            kappa:true  },
+  { id:'mc09', trader:'Mechanic', name:'Gunsmith - Part 9',            kappa:true  },
+  { id:'mc10', trader:'Mechanic', name:'Gunsmith - Part 10',           kappa:true  },
+  { id:'mc11', trader:'Mechanic', name:'Gunsmith - Part 11',           kappa:true  },
+  { id:'mc12', trader:'Mechanic', name:'Gunsmith - Part 12',           kappa:true  },
+  { id:'mc13', trader:'Mechanic', name:'Gunsmith - Part 13',           kappa:true  },
+  { id:'mc14', trader:'Mechanic', name:'Gunsmith - Part 14',           kappa:true  },
+  { id:'mc15', trader:'Mechanic', name:'Signal - Part 2',              kappa:true  },
+  { id:'mc16', trader:'Mechanic', name:'Signal - Part 3',              kappa:true  },
+  { id:'mc17', trader:'Mechanic', name:'Calibration',                  kappa:true  },
+  { id:'mc18', trader:'Mechanic', name:'Regulated Materials',          kappa:true  },
+  { id:'mc19', trader:'Mechanic', name:'Make Amends - Part 1',         kappa:true  },
+  { id:'mc20', trader:'Mechanic', name:'Make Amends - Part 2',         kappa:true  },
+  { id:'mc21', trader:'Mechanic', name:'The Blood of War - Part 1',    kappa:true  },
+  { id:'mc22', trader:'Mechanic', name:'The Blood of War - Part 2',    kappa:true  },
+  { id:'mc23', trader:'Mechanic', name:'The Blood of War - Part 3',    kappa:true  },
+  // Mechanic side
+  { id:'mcs1', trader:'Mechanic', name:'Insurance Fraud - Part 1',     kappa:false },
+  { id:'mcs2', trader:'Mechanic', name:'Insurance Fraud - Part 2',     kappa:false },
+  { id:'mcs3', trader:'Mechanic', name:'Acquaintance',                  kappa:false },
+
+  // ── RAGMAN ───────────────────────────────────────────────
+  { id:'rg01', trader:'Ragman', name:'Clothes Matter',                  kappa:true  },
+  { id:'rg02', trader:'Ragman', name:'Textile - Part 1',                kappa:true  },
+  { id:'rg03', trader:'Ragman', name:'Textile - Part 2',                kappa:true  },
+  { id:'rg04', trader:'Ragman', name:'No Fuss Buyer',                   kappa:true  },
+  { id:'rg05', trader:'Ragman', name:'Phantom Threat',                  kappa:true  },
+  { id:'rg06', trader:'Ragman', name:'Dressed to Kill',                 kappa:true  },
+  { id:'rg07', trader:'Ragman', name:'Hot Delivery',                    kappa:true  },
+  { id:'rg08', trader:'Ragman', name:'Easy Job - Part 1',               kappa:true  },
+  { id:'rg09', trader:'Ragman', name:'Easy Job - Part 2',               kappa:true  },
+  { id:'rg10', trader:'Ragman', name:'Ragman - Part 1',                 kappa:true  },
+  // Ragman side
+  { id:'rgs1', trader:'Ragman', name:'Acquaintance',                    kappa:false },
+  { id:'rgs2', trader:'Ragman', name:'Huntsman Path - Forest Cleaning', kappa:false },
+  { id:'rgs3', trader:'Ragman', name:'Style Isolation',                 kappa:false },
+
+  // ── JAEGER ───────────────────────────────────────────────
+  { id:'j01', trader:'Jaeger', name:'Introduction',                    kappa:true  },
+  { id:'j02', trader:'Jaeger', name:'Debut',                           kappa:true  },
+  { id:'j03', trader:'Jaeger', name:'Nature Hunt',                     kappa:true  },
+  { id:'j04', trader:'Jaeger', name:'Long Road',                       kappa:true  },
+  { id:'j05', trader:'Jaeger', name:"Hunter's Path",                   kappa:true  },
+  { id:'j06', trader:'Jaeger', name:'Never Too Late to Go Hunting',    kappa:true  },
+  { id:'j07', trader:'Jaeger', name:'Poaching',                        kappa:true  },
+  { id:'j08', trader:'Jaeger', name:'An Impossible Find',              kappa:true  },
+  { id:'j09', trader:'Jaeger', name:'Lend-Lease - Part 1',             kappa:true  },
+  { id:'j10', trader:'Jaeger', name:'Lend-Lease - Part 2',             kappa:true  },
+  { id:'j11', trader:'Jaeger', name:'Acquaintance',                    kappa:true  },
+  { id:'j12', trader:'Jaeger', name:'Survivalist Path - Zhivchik',     kappa:true  },
+  { id:'j13', trader:'Jaeger', name:'Survivalist Path - Unprotected',  kappa:true  },
+  { id:'j14', trader:'Jaeger', name:'Survivalist Path - Junky',        kappa:true  },
+  // Jaeger side
+  { id:'js1', trader:'Jaeger', name:'Huntsman Path - Eraser - Part 1', kappa:false },
+  { id:'js2', trader:'Jaeger', name:'Huntsman Path - Eraser - Part 2', kappa:false },
+  { id:'js3', trader:'Jaeger', name:'Huntsman Path - Woods Keeper',    kappa:false },
+  { id:'js4', trader:'Jaeger', name:'Huntsman Path - Trophy Hunter',   kappa:false },
+  { id:'js5', trader:'Jaeger', name:'Huntsman Path - Secured Perimeter', kappa:false },
+
+  // ── FENCE ────────────────────────────────────────────────
+  { id:'f01', trader:'Fence', name:'Compensation for Damage - Part 1', kappa:true  },
+  { id:'f02', trader:'Fence', name:'Compensation for Damage - Part 2', kappa:true  },
+  { id:'f03', trader:'Fence', name:'Compensation for Damage - Part 3', kappa:true  },
+  { id:'f04', trader:'Fence', name:'Compensation for Damage - Part 4', kappa:true  },
+  { id:'f05', trader:'Fence', name:'The Collector',                    kappa:true  },
+  // Fence side
+  { id:'fs1', trader:'Fence', name:'Saving the Mole',                  kappa:false },
+  { id:'fs2', trader:'Fence', name:'Safe Corridor',                    kappa:false },
+
+  // ── LIGHTKEEPER ──────────────────────────────────────────
+  { id:'lk01', trader:'Lightkeeper', name:'Knock-Knock',               kappa:true  },
+  { id:'lk02', trader:'Lightkeeper', name:'Debut at the Lighthouse',   kappa:true  },
+  { id:'lk03', trader:'Lightkeeper', name:'Lighthouse Keeper',         kappa:true  },
+  { id:'lk04', trader:'Lightkeeper', name:'Offshore Interests',        kappa:true  },
+  { id:'lk05', trader:'Lightkeeper', name:'On the Trail of Tembelan',  kappa:true  },
+  { id:'lk06', trader:'Lightkeeper', name:'Precious Metal',            kappa:true  },
+  // Lightkeeper side
+  { id:'lks1', trader:'Lightkeeper', name:'Easy Money - Part 1',       kappa:false },
+  { id:'lks2', trader:'Lightkeeper', name:'Easy Money - Part 2',       kappa:false },
+  { id:'lks3', trader:'Lightkeeper', name:'Easy Money - Part 3',       kappa:false },
+];
+
+// ── HIDEOUT DATA ─────────────────────────────────────────────────────────────
+const HIDEOUT = [
+  {
+    id:'medstation', name:'Medstation', icon:'🏥',
+    levels:[
+      { level:1, items:[
+        { id:'ms-l1-i1', name:'Aseptic bandage',        qty:2  },
+        { id:'ms-l1-i2', name:'Analgin painkillers',    qty:3  },
+        { id:'ms-l1-i3', name:'Duct tape',              qty:2  },
+        { id:'ms-l1-i4', name:'Nail',                   qty:10 },
+      ]},
+      { level:2, items:[
+        { id:'ms-l2-i1', name:'Ibuprofen',              qty:5  },
+        { id:'ms-l2-i2', name:'Sewn kit',               qty:3  },
+        { id:'ms-l2-i3', name:'Artificial jaw',         qty:1  },
+        { id:'ms-l2-i4', name:'Morphine injector',      qty:2  },
+      ]},
+      { level:3, items:[
+        { id:'ms-l3-i1', name:'Surgical kit',           qty:3  },
+        { id:'ms-l3-i2', name:'Defibrillator',          qty:1  },
+        { id:'ms-l3-i3', name:'Saline solution',        qty:4  },
+        { id:'ms-l3-i4', name:'Dextrose injection',     qty:4  },
+      ]},
+    ]
+  },
+  {
+    id:'workbench', name:'Workbench', icon:'🔧',
+    levels:[
+      { level:1, items:[
+        { id:'wb-l1-i1', name:'Screwdriver',            qty:3  },
+        { id:'wb-l1-i2', name:'Bolt',                   qty:10 },
+        { id:'wb-l1-i3', name:'Metal pipe',             qty:3  },
+      ]},
+      { level:2, items:[
+        { id:'wb-l2-i1', name:'Pressure gauge',         qty:2  },
+        { id:'wb-l2-i2', name:'Capacitor',              qty:5  },
+        { id:'wb-l2-i3', name:'Power cord',             qty:3  },
+      ]},
+      { level:3, items:[
+        { id:'wb-l3-i1', name:'CPU fan',                qty:2  },
+        { id:'wb-l3-i2', name:'TerraGroup case',        qty:1  },
+        { id:'wb-l3-i3', name:'Printed circuit board',  qty:3  },
+        { id:'wb-l3-i4', name:'Electric drill',         qty:1  },
+      ]},
+    ]
+  },
+  {
+    id:'intelligence', name:'Intelligence Center', icon:'🔍',
+    levels:[
+      { level:1, items:[
+        { id:'ic-l1-i1', name:'Folder with intelligence',     qty:3  },
+        { id:'ic-l1-i2', name:'Broken LCD',                   qty:2  },
+        { id:'ic-l1-i3', name:'Wires',                        qty:3  },
+      ]},
+      { level:2, items:[
+        { id:'ic-l2-i1', name:'SAS drive',                    qty:2  },
+        { id:'ic-l2-i2', name:'Folder with intelligence',     qty:5  },
+        { id:'ic-l2-i3', name:'Graphics card',                qty:2  },
+      ]},
+      { level:3, items:[
+        { id:'ic-l3-i1', name:'Intelligence folder',          qty:7  },
+        { id:'ic-l3-i2', name:'Optical cable',                qty:3  },
+        { id:'ic-l3-i3', name:'USB adapter',                  qty:2  },
+        { id:'ic-l3-i4', name:'Secure Flash drive',           qty:3  },
+      ]},
+    ]
+  },
+  {
+    id:'generator', name:'Generator', icon:'⚡',
+    levels:[
+      { level:1, items:[
+        { id:'gen-l1-i1', name:'Spark plug',            qty:5  },
+        { id:'gen-l1-i2', name:'Hose',                  qty:2  },
+        { id:'gen-l1-i3', name:'Metal pipe',            qty:4  },
+      ]},
+      { level:2, items:[
+        { id:'gen-l2-i1', name:'Duct tape',             qty:3  },
+        { id:'gen-l2-i2', name:'Insulating tape',       qty:3  },
+        { id:'gen-l2-i3', name:'Wires',                 qty:5  },
+      ]},
+      { level:3, items:[
+        { id:'gen-l3-i1', name:'Electric motor',        qty:3  },
+        { id:'gen-l3-i2', name:'Capacitor',             qty:4  },
+        { id:'gen-l3-i3', name:'Circuit board',         qty:2  },
+        { id:'gen-l3-i4', name:'Radiator heatsink',     qty:2  },
+      ]},
+    ]
+  },
+  {
+    id:'nutrition', name:'Nutrition Unit', icon:'🥫',
+    levels:[
+      { level:1, items:[
+        { id:'nu-l1-i1', name:'Condensed milk',         qty:3  },
+        { id:'nu-l1-i2', name:'Canned beef stew (L)',   qty:4  },
+        { id:'nu-l1-i3', name:'Bottle of water',        qty:5  },
+      ]},
+      { level:2, items:[
+        { id:'nu-l2-i1', name:'Emelya wheat flour',     qty:5  },
+        { id:'nu-l2-i2', name:'Powdered coffee',        qty:3  },
+        { id:'nu-l2-i3', name:'Jar of lemonade',        qty:5  },
+      ]},
+      { level:3, items:[
+        { id:'nu-l3-i1', name:'Ox tail meat',           qty:3  },
+        { id:'nu-l3-i2', name:'Plastic',                qty:4  },
+        { id:'nu-l3-i3', name:'Fermented sugar mash',   qty:10 },
+      ]},
+    ]
+  },
+  {
+    id:'water', name:'Water Collector', icon:'💧',
+    levels:[
+      { level:1, items:[
+        { id:'wc-l1-i1', name:'Bottle of water',        qty:5  },
+        { id:'wc-l1-i2', name:'Plumbing pipe',          qty:3  },
+        { id:'wc-l1-i3', name:'Duct tape',              qty:2  },
+      ]},
+      { level:2, items:[
+        { id:'wc-l2-i1', name:'Purification filter',    qty:2  },
+        { id:'wc-l2-i2', name:'Chlorine tablet',        qty:5  },
+        { id:'wc-l2-i3', name:'Hose',                   qty:3  },
+      ]},
+      { level:3, items:[
+        { id:'wc-l3-i1', name:'Industrial water filter',qty:1  },
+        { id:'wc-l3-i2', name:'Fiberglass cloth',       qty:3  },
+        { id:'wc-l3-i3', name:'Pump (water)',           qty:1  },
+      ]},
+    ]
+  },
+  {
+    id:'stash', name:'Stash', icon:'📦',
+    levels:[
+      { level:2, items:[
+        { id:'st-l2-i1', name:'Ratchet wrench',         qty:2  },
+        { id:'st-l2-i2', name:'Shelving',               qty:2  },
+        { id:'st-l2-i3', name:'Duct tape',              qty:3  },
+        { id:'st-l2-i4', name:'Plywood sheet',          qty:4  },
+      ]},
+      { level:3, items:[
+        { id:'st-l3-i1', name:'Steel shelf',            qty:3  },
+        { id:'st-l3-i2', name:'Bolt',                   qty:20 },
+        { id:'st-l3-i3', name:'Welding mask',           qty:1  },
+      ]},
+      { level:4, items:[
+        { id:'st-l4-i1', name:'Elite plating',          qty:4  },
+        { id:'st-l4-i2', name:'Bolts (pack)',           qty:40 },
+        { id:'st-l4-i3', name:'Plywood sheet (large)',  qty:6  },
+      ]},
+    ]
+  },
+  {
+    id:'shooting', name:'Shooting Range', icon:'🎯',
+    levels:[
+      { level:1, items:[
+        { id:'sr-l1-i1', name:'Plywood sheet',          qty:6  },
+        { id:'sr-l1-i2', name:'Bolt',                   qty:10 },
+        { id:'sr-l1-i3', name:'Nail',                   qty:20 },
+      ]},
+      { level:2, items:[
+        { id:'sr-l2-i1', name:'Wooden beam',            qty:4  },
+        { id:'sr-l2-i2', name:'Sand bag',               qty:5  },
+        { id:'sr-l2-i3', name:'Duct tape',              qty:4  },
+      ]},
+      { level:3, items:[
+        { id:'sr-l3-i1', name:'Steel plate',            qty:3  },
+        { id:'sr-l3-i2', name:'Rubber',                 qty:5  },
+        { id:'sr-l3-i3', name:'PNB container',          qty:2  },
+      ]},
+    ]
+  },
+  {
+    id:'heating', name:'Heating', icon:'🔥',
+    levels:[
+      { level:1, items:[
+        { id:'ht-l1-i1', name:'Hose',                   qty:4  },
+        { id:'ht-l1-i2', name:'Plumbing pipe',          qty:4  },
+        { id:'ht-l1-i3', name:'Valve',                  qty:2  },
+      ]},
+      { level:2, items:[
+        { id:'ht-l2-i1', name:'Heat pipe',              qty:3  },
+        { id:'ht-l2-i2', name:'Gasket kit',             qty:2  },
+        { id:'ht-l2-i3', name:'Metalworking tool',      qty:2  },
+      ]},
+      { level:3, items:[
+        { id:'ht-l3-i1', name:'Electric motor',         qty:2  },
+        { id:'ht-l3-i2', name:'Pump (heating)',         qty:1  },
+        { id:'ht-l3-i3', name:'Corrugated hose',        qty:3  },
+      ]},
+    ]
+  },
+  {
+    id:'bitcoin', name:'Bitcoin Farm', icon:'₿',
+    levels:[
+      { level:1, items:[
+        { id:'bf-l1-i1', name:'Graphics card',          qty:10 },
+        { id:'bf-l1-i2', name:'Power supply unit',      qty:2  },
+        { id:'bf-l1-i3', name:'Phase control relay',    qty:3  },
+      ]},
+      { level:2, items:[
+        { id:'bf-l2-i1', name:'Graphics card',          qty:20 },
+        { id:'bf-l2-i2', name:'Wire',                   qty:10 },
+        { id:'bf-l2-i3', name:'CPU fan',                qty:5  },
+      ]},
+      { level:3, items:[
+        { id:'bf-l3-i1', name:'Graphics card',          qty:50 },
+        { id:'bf-l3-i2', name:'Military battery',       qty:3  },
+        { id:'bf-l3-i3', name:'Radiator heatsink',      qty:5  },
+      ]},
+    ]
+  },
+  {
+    id:'lavatory', name:'Lavatory', icon:'🚿',
+    levels:[
+      { level:1, items:[
+        { id:'lv-l1-i1', name:'Plumbing pipe',          qty:3  },
+        { id:'lv-l1-i2', name:'Nails',                  qty:10 },
+        { id:'lv-l1-i3', name:'Corrugated hose',        qty:2  },
+      ]},
+      { level:2, items:[
+        { id:'lv-l2-i1', name:'Soap',                   qty:5  },
+        { id:'lv-l2-i2', name:'Shower cap',             qty:3  },
+        { id:'lv-l2-i3', name:'Electric drill',         qty:1  },
+      ]},
+      { level:3, items:[
+        { id:'lv-l3-i1', name:'Poxeram cold weld',      qty:3  },
+        { id:'lv-l3-i2', name:'Chlorine tablet',        qty:5  },
+        { id:'lv-l3-i3', name:'Metal grip',             qty:2  },
+      ]},
+    ]
+  },
+  {
+    id:'library', name:'Library', icon:'📚',
+    levels:[
+      { level:1, items:[
+        { id:'lb-l1-i1', name:'Handbook of the rifleman',    qty:1 },
+        { id:'lb-l1-i2', name:'Physical training manual',    qty:1 },
+        { id:'lb-l1-i3', name:'Engineering book',            qty:1 },
+        { id:'lb-l1-i4', name:'Shelf',                       qty:2 },
+      ]},
+    ]
+  },
+  {
+    id:'vents', name:'Vents', icon:'💨',
+    levels:[
+      { level:1, items:[
+        { id:'vt-l1-i1', name:'Corrugated hose',        qty:3  },
+        { id:'vt-l1-i2', name:'Duct tape',              qty:4  },
+        { id:'vt-l1-i3', name:'Zip tie',                qty:6  },
+      ]},
+      { level:2, items:[
+        { id:'vt-l2-i1', name:'Air filter',             qty:2  },
+        { id:'vt-l2-i2', name:'Radiator heatsink',      qty:2  },
+        { id:'vt-l2-i3', name:'Wires',                  qty:4  },
+      ]},
+      { level:3, items:[
+        { id:'vt-l3-i1', name:'Military power filter',  qty:1  },
+        { id:'vt-l3-i2', name:'ULACH',                  qty:1  },
+        { id:'vt-l3-i3', name:'Phase control relay',    qty:2  },
+      ]},
+    ]
+  },
+  {
+    id:'illumination', name:'Illumination', icon:'💡',
+    levels:[
+      { level:1, items:[
+        { id:'il-l1-i1', name:'Light bulb',             qty:5  },
+        { id:'il-l1-i2', name:'Wires',                  qty:3  },
+        { id:'il-l1-i3', name:'Duct tape',              qty:2  },
+      ]},
+      { level:2, items:[
+        { id:'il-l2-i1', name:'Lamp',                   qty:3  },
+        { id:'il-l2-i2', name:'Power switch',           qty:2  },
+        { id:'il-l2-i3', name:'Diode',                  qty:5  },
+      ]},
+      { level:3, items:[
+        { id:'il-l3-i1', name:'Circuit board',          qty:3  },
+        { id:'il-l3-i2', name:'Light socket',           qty:2  },
+        { id:'il-l3-i3', name:'Diode pack',             qty:4  },
+      ]},
+    ]
+  },
+  {
+    id:'solar', name:'Solar Power', icon:'☀️',
+    levels:[
+      { level:1, items:[
+        { id:'sp-l1-i1', name:'Power supply unit',      qty:3  },
+        { id:'sp-l1-i2', name:'Phase control relay',    qty:2  },
+        { id:'sp-l1-i3', name:'Wires',                  qty:5  },
+        { id:'sp-l1-i4', name:'Military battery',       qty:2  },
+      ]},
+    ]
+  },
+  {
+    id:'airfilter', name:'Air Filtering Unit', icon:'🌬️',
+    levels:[
+      { level:1, items:[
+        { id:'af-l1-i1', name:'FP-100 filter absorber', qty:1  },
+        { id:'af-l1-i2', name:'Corrugated hose',        qty:4  },
+        { id:'af-l1-i3', name:'Duct tape',              qty:5  },
+        { id:'af-l1-i4', name:'Wires',                  qty:4  },
+      ]},
+    ]
+  },
+  {
+    id:'restspace', name:'Rest Space', icon:'🛏️',
+    levels:[
+      { level:1, items:[
+        { id:'rs-l1-i1', name:'Pillow',                 qty:2  },
+        { id:'rs-l1-i2', name:'Sleeping bag',           qty:1  },
+        { id:'rs-l1-i3', name:'Plywood sheet',          qty:3  },
+      ]},
+      { level:2, items:[
+        { id:'rs-l2-i1', name:'Cot',                    qty:1  },
+        { id:'rs-l2-i2', name:'Bedsheet',               qty:2  },
+        { id:'rs-l2-i3', name:'Wooden furniture piece', qty:2  },
+      ]},
+      { level:3, items:[
+        { id:'rs-l3-i1', name:'Furniture plywood',      qty:4  },
+        { id:'rs-l3-i2', name:'Screw nuts (box)',        qty:2  },
+        { id:'rs-l3-i3', name:'Air freshener',          qty:2  },
+      ]},
+    ]
+  },
+];
+
+// ════════════════════════════════════════════════
+//  STATE & STORAGE
+// ════════════════════════════════════════════════
+const KEY = 'tarkov_tracker_v2';
+let state = loadState();
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    return raw ? JSON.parse(raw) : { quests: {}, hideout: {} };
+  } catch { return { quests: {}, hideout: {} }; }
+}
+function saveState() {
+  localStorage.setItem(KEY, JSON.stringify(state));
+}
+
+// ════════════════════════════════════════════════
+//  BUILD UI
+// ════════════════════════════════════════════════
+
+const activeTab = { current: 'main' };
+const filters   = { main: 'all', side: 'all' };
+
+function switchTab(tab) {
+  activeTab.current = tab;
+  document.querySelectorAll('.tab-btn').forEach((b,i) => {
+    const tabs = ['main','side','hideout'];
+    b.classList.toggle('active', tabs[i] === tab);
+  });
+  document.querySelectorAll('.tab-panel').forEach(p => {
+    p.classList.toggle('active', p.id === 'panel-' + tab);
+  });
+}
+
+function buildTraderSection(trader, quests, type) {
+  const color = TRADERS[trader] || '#aaa';
+  const done  = quests.filter(q => state.quests[q.id]).length;
+  const total = quests.length;
+  const pct   = total ? (done / total * 100) : 0;
+  const collapsed = total > 0 && done === total ? ' collapsed' : '';
+
+  const items = quests.map(q => {
+    const checked = state.quests[q.id] ? 'checked' : '';
+    return `<div class="quest-item${checked ? ' completed' : ''}" data-name="${q.name.toLowerCase()}" data-type="${type}" id="qi-${q.id}">
+      <input type="checkbox" class="quest-checkbox" id="qc-${q.id}" ${checked} onchange="toggleQuest('${q.id}',this.checked)">
+      <label class="quest-name" for="qc-${q.id}">${q.name}</label>
+    </div>`;
+  }).join('');
+
+  return `<div class="trader-section${collapsed}" id="ts-${trader}-${type}">
+    <div class="trader-header" onclick="toggleTrader('ts-${trader}-${type}')">
+      <div class="trader-dot" style="background:${color}"></div>
+      <span class="trader-name" style="color:${color}">${trader}</span>
+      <div class="trader-mini-bar">
+        <div class="trader-mini-fill" style="background:${color};width:${pct}%"></div>
+      </div>
+      <span class="trader-progress"><span class="done">${done}</span> / ${total}</span>
+      <span class="trader-chevron">&#9660;</span>
+    </div>
+    <div class="quest-list">${items}</div>
+  </div>`;
+}
+
+function buildQuestTab(type) {
+  const kappa = type === 'main';
+  const filtered = QUESTS.filter(q => q.kappa === kappa);
+  const traders = [...new Set(filtered.map(q => q.trader))];
+  const container = document.getElementById(type === 'main' ? 'main-traders' : 'side-traders');
+  container.innerHTML = traders.map(t =>
+    buildTraderSection(t, filtered.filter(q => q.trader === t), type)
+  ).join('');
+}
+
+function buildHideout() {
+  const grid = document.getElementById('hideout-grid');
+  grid.innerHTML = HIDEOUT.map(station => {
+    const allItems = station.levels.flatMap(l => l.items);
+    const doneCt   = allItems.filter(i => state.hideout[i.id]).length;
+    const totalCt  = allItems.length;
+
+    const levelsHTML = station.levels.map(lv => {
+      const lvDone  = lv.items.filter(i => state.hideout[i.id]).length;
+      const lvTotal = lv.items.length;
+      const lvComplete = lvDone === lvTotal ? ' level-complete' : '';
+      const itemsHTML  = lv.items.map(item => {
+        const checked = state.hideout[item.id] ? 'checked' : '';
+        return `<div class="item-row${checked ? ' item-checked' : ''}" id="ir-${item.id}" data-name="${item.name.toLowerCase()}">
+          <input type="checkbox" class="item-checkbox" id="ic-${item.id}" ${checked} onchange="toggleItem('${item.id}',this.checked)">
+          <label class="item-name" for="ic-${item.id}">${item.name}</label>
+          <span class="item-qty">×${item.qty}</span>
+        </div>`;
+      }).join('');
+      return `<div class="station-level${lvComplete}" id="slv-${station.id}-${lv.level}">
+        <div class="level-header">
+          <span class="level-label">Level ${lv.level}</span>
+          <span class="level-done-badge">&#10003; Complete</span>
+        </div>
+        <div class="item-list">${itemsHTML}</div>
+      </div>`;
+    }).join('');
+
+    return `<div class="station-card" id="sc-${station.id}">
+      <div class="station-header" onclick="toggleStation('sc-${station.id}')">
+        <span class="station-icon">${station.icon}</span>
+        <span class="station-name">${station.name}</span>
+        <span class="station-progress-text">${doneCt}/${totalCt}</span>
+        <span class="trader-chevron">&#9660;</span>
+      </div>
+      <div class="station-body">${levelsHTML}</div>
+    </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════════
+//  TOGGLE HANDLERS
+// ════════════════════════════════════════════════
+
+function toggleQuest(id, checked) {
+  state.quests[id] = checked;
+  saveState();
+  const el = document.getElementById('qi-' + id);
+  if (el) el.classList.toggle('completed', checked);
+  updateAll();
+}
+
+function toggleItem(id, checked) {
+  state.hideout[id] = checked;
+  saveState();
+  const row = document.getElementById('ir-' + id);
+  if (row) row.classList.toggle('item-checked', checked);
+  checkLevelComplete(id);
+  updateAll();
+}
+
+function checkLevelComplete(itemId) {
+  for (const station of HIDEOUT) {
+    for (const lv of station.levels) {
+      if (lv.items.find(i => i.id === itemId)) {
+        const done  = lv.items.filter(i => state.hideout[i.id]).length;
+        const el = document.getElementById(`slv-${station.id}-${lv.level}`);
+        if (el) el.classList.toggle('level-complete', done === lv.items.length);
+      }
+    }
+  }
+}
+
+function toggleTrader(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.toggle('collapsed');
+}
+function toggleStation(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.toggle('collapsed');
+}
+
+// ════════════════════════════════════════════════
+//  FILTER / SEARCH
+// ════════════════════════════════════════════════
+
+function filterQuests(type, query) {
+  const q = query.toLowerCase().trim();
+  const filter = filters[type];
+  document.querySelectorAll(`.quest-item[data-type="${type}"]`).forEach(el => {
+    const nameMatch = !q || el.dataset.name.includes(q);
+    const isDone    = el.classList.contains('completed');
+    const filterOk  = filter === 'all'
+      || (filter === 'complete' && isDone)
+      || (filter === 'incomplete' && !isDone);
+    el.classList.toggle('hidden', !(nameMatch && filterOk));
+  });
+}
+
+function filterHideout(query) {
+  const q = query.toLowerCase().trim();
+  document.querySelectorAll('.item-row').forEach(el => {
+    el.classList.toggle('hidden', q && !el.dataset.name.includes(q));
+  });
+}
+
+function setFilter(type, filter, btn) {
+  filters[type] = filter;
+  btn.closest('.filter-bar').querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const searchInput = btn.closest('.filter-bar').querySelector('.search-input');
+  filterQuests(type, searchInput ? searchInput.value : '');
+}
+
+// ════════════════════════════════════════════════
+//  STATS & PROGRESS
+// ════════════════════════════════════════════════
+
+function updateAll() {
+  const kappaQuests = QUESTS.filter(q => q.kappa);
+  const kappaDone   = kappaQuests.filter(q => state.quests[q.id]).length;
+  const kappaTotal  = kappaQuests.length;
+  const kappaPct    = kappaTotal ? Math.round(kappaDone / kappaTotal * 100) : 0;
+
+  const sideQuests  = QUESTS.filter(q => !q.kappa);
+  const sideDone    = sideQuests.filter(q => state.quests[q.id]).length;
+  const sideTotal   = sideQuests.length;
+
+  const allItems    = HIDEOUT.flatMap(s => s.levels.flatMap(l => l.items));
+  const hideDone    = allItems.filter(i => state.hideout[i.id]).length;
+  const hideTotal   = allItems.length;
+  const hidePct     = hideTotal ? Math.round(hideDone / hideTotal * 100) : 0;
+
+  // Header stats
+  document.getElementById('stat-kappa').textContent    = kappaPct + '%';
+  document.getElementById('stat-main').textContent     = kappaDone + '/' + kappaTotal;
+  document.getElementById('stat-side').textContent     = sideDone + '/' + sideTotal;
+  document.getElementById('stat-hideout').textContent  = hidePct + '%';
+
+  // Kappa bar
+  document.getElementById('kappa-bar').style.width          = kappaPct + '%';
+  document.getElementById('kappa-label-text').textContent   = kappaDone + ' / ' + kappaTotal + ' quests completed';
+
+  // Main tab bar
+  document.getElementById('main-bar').style.width           = (kappaTotal ? kappaDone/kappaTotal*100 : 0) + '%';
+  document.getElementById('main-progress-text').textContent = kappaDone + ' / ' + kappaTotal;
+  document.getElementById('tab-main-badge').textContent     = kappaDone + '/' + kappaTotal;
+
+  // Side tab bar
+  document.getElementById('side-bar').style.width           = (sideTotal ? sideDone/sideTotal*100 : 0) + '%';
+  document.getElementById('side-progress-text').textContent = sideDone + ' / ' + sideTotal;
+  document.getElementById('tab-side-badge').textContent     = sideDone + '/' + sideTotal;
+
+  // Hideout tab bar
+  document.getElementById('hideout-bar').style.width            = hidePct + '%';
+  document.getElementById('hideout-progress-text').textContent  = hideDone + ' / ' + hideTotal;
+  document.getElementById('tab-hideout-badge').textContent      = hidePct + '%';
+
+  // Update trader mini bars
+  ['main','side'].forEach(type => {
+    const kappa2 = type === 'main';
+    const filtered = QUESTS.filter(q => q.kappa === kappa2);
+    const traders  = [...new Set(filtered.map(q => q.trader))];
+    traders.forEach(tr => {
+      const tquests = filtered.filter(q => q.trader === tr);
+      const tdone   = tquests.filter(q => state.quests[q.id]).length;
+      const ttotal  = tquests.length;
+      const fill = document.querySelector(`#ts-${tr}-${type} .trader-mini-fill`);
+      const prog = document.querySelector(`#ts-${tr}-${type} .trader-progress`);
+      if (fill) fill.style.width = (ttotal ? tdone/ttotal*100 : 0) + '%';
+      if (prog) prog.innerHTML   = `<span class="done">${tdone}</span> / ${ttotal}`;
+    });
+  });
+
+  // Update hideout station progress text
+  HIDEOUT.forEach(station => {
+    const allI  = station.levels.flatMap(l => l.items);
+    const doneI = allI.filter(i => state.hideout[i.id]).length;
+    const el = document.querySelector(`#sc-${station.id} .station-progress-text`);
+    if (el) el.textContent = doneI + '/' + allI.length;
+  });
+}
+
+// ════════════════════════════════════════════════
+//  RESET
+// ════════════════════════════════════════════════
+
+function resetTab(tab) {
+  if (!confirm(`Reset all ${tab} progress? This cannot be undone.`)) return;
+  if (tab === 'main') {
+    QUESTS.filter(q => q.kappa).forEach(q => { delete state.quests[q.id]; });
+    buildQuestTab('main');
+  } else if (tab === 'side') {
+    QUESTS.filter(q => !q.kappa).forEach(q => { delete state.quests[q.id]; });
+    buildQuestTab('side');
+  } else if (tab === 'hideout') {
+    HIDEOUT.flatMap(s => s.levels.flatMap(l => l.items)).forEach(i => { delete state.hideout[i.id]; });
+    buildHideout();
+  }
+  saveState();
+  updateAll();
+}
+
+// ════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════
+buildQuestTab('main');
+buildQuestTab('side');
+buildHideout();
+updateAll();
+</script>
+</body>
+</html>
