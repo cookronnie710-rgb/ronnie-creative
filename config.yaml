@@ -1,0 +1,41 @@
+# ─── Your personal details ───────────────────────────────────────────────────
+sender:
+  name: "Ronnie Cook"
+  email: "cookronnie710@gmail.com"
+  phone: ""          # optional, added to email signature
+  linkedin: ""       # optional
+
+# ─── Email delivery ──────────────────────────────────────────────────────────
+email:
+  provider: smtp     # "smtp" (free) or "sendgrid" (recommended for 1000s)
+
+  smtp:
+    host: smtp.gmail.com
+    port: 587
+    # Set credentials in .env as SMTP_USERNAME / SMTP_PASSWORD
+    # For Gmail use an App Password: myaccount.google.com/apppasswords
+
+  sendgrid:
+    # Set SENDGRID_API_KEY in .env
+    from_name: "Ronnie Cook"
+
+  subject_template: "Application for {title} – {sender_name}"
+
+# ─── Rate limiting (important for deliverability) ────────────────────────────
+sending:
+  delay_between_emails: 30   # seconds between each send (30s = ~120/hour)
+  batch_size: 50             # pause after this many in one run
+  batch_pause: 300           # seconds to pause between batches (5 min)
+
+# ─── AI tailoring ────────────────────────────────────────────────────────────
+ai:
+  model: claude-sonnet-4-6
+  max_tokens: 1200
+  # Set ANTHROPIC_API_KEY in .env
+
+# ─── File paths ──────────────────────────────────────────────────────────────
+files:
+  cv: "assets/cv.pdf"
+  cover_letter_template: "templates/cover_letter.md"
+  jobs_csv: "data/jobs.csv"
+  tracking_db: "data/tracking.db"

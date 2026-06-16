@@ -1,0 +1,4 @@
+id,company,title,job_description,contact_email,job_url,notes
+1,Acme Tech,Software Engineer,"We are looking for a software engineer with 3+ years Python, REST APIs, and cloud experience. Nice to have: React, Docker, CI/CD pipelines.",careers@acmetech.example.com,https://acmetech.example.com/jobs/123,
+2,Creative Studio,Frontend Developer,"Join our creative team building web experiences. Need React and CSS expertise, strong eye for design, and experience with Figma.",jobs@creativestudio.example.com,https://creativestudio.example.com/careers,Portfolio required
+3,DataCorp,Data Analyst,"Seeking a data analyst skilled in SQL, Python (pandas), and Tableau. You will work with business stakeholders to turn data into insights.",hr@datacorp.example.com,https://datacorp.example.com/roles/da,
