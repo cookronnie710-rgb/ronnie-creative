@@ -1,0 +1,169 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fieldHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.hint {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* Textarea */
+.textareaWrap {
+  position: relative;
+}
+
+.textarea {
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: var(--font-sans);
+  line-height: 1.6;
+  resize: vertical;
+  min-height: 80px;
+  transition: border-color var(--transition);
+}
+.textarea:focus {
+  outline: none;
+  border-color: var(--purple-500);
+  box-shadow: 0 0 0 3px var(--purple-dim);
+}
+.textarea::placeholder { color: var(--text-muted); }
+.textarea:disabled { opacity: 0.5; cursor: not-allowed; resize: none; }
+
+.charCount {
+  position: absolute;
+  bottom: 8px;
+  right: 10px;
+  font-size: 11px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+.charWarn { color: var(--warning); }
+
+/* Select */
+.selectWrap {
+  position: relative;
+}
+
+.select {
+  width: 100%;
+  padding: 10px 36px 10px 12px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 13px;
+  appearance: none;
+  cursor: pointer;
+  transition: border-color var(--transition);
+}
+.select:focus {
+  outline: none;
+  border-color: var(--purple-500);
+}
+.select:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.chevron {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+/* Segmented Control */
+.segmented {
+  display: flex;
+  gap: 4px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  padding: 4px;
+}
+
+.segment {
+  flex: 1;
+  padding: 7px 12px;
+  border-radius: calc(var(--radius-md) - 2px);
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+.segment:hover:not(.segmentActive):not(:disabled) {
+  color: var(--text-secondary);
+  background: var(--bg-hover);
+}
+.segmentActive {
+  background: var(--purple-600);
+  color: #fff;
+}
+.segment:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Submit Button */
+.submitBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: var(--purple-600);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  align-self: flex-start;
+  min-width: 160px;
+}
+.submitBtn:hover:not(:disabled) {
+  background: var(--purple-500);
+  box-shadow: var(--shadow-purple);
+  transform: translateY(-1px);
+}
+.submitBtn:active:not(:disabled) {
+  transform: translateY(0);
+}
+.submitBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btnSpinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}

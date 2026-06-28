@@ -1,0 +1,88 @@
+.header {
+  height: var(--header-height);
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(8px);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.title {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+}
+
+.badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 2px 6px;
+  background: var(--purple-dim);
+  color: var(--purple-400);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 4px;
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.apiBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid;
+  cursor: pointer;
+  transition: all var(--transition);
+  background: transparent;
+}
+
+.apiSet {
+  color: var(--success);
+  border-color: rgba(52, 211, 153, 0.2);
+}
+.apiSet:hover {
+  background: rgba(52, 211, 153, 0.07);
+}
+
+.apiMissing {
+  color: var(--warning);
+  border-color: rgba(251, 191, 36, 0.2);
+}
+.apiMissing:hover {
+  background: rgba(251, 191, 36, 0.07);
+}
+
+.apiDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.apiSet .apiDot {
+  background: var(--success);
+  box-shadow: 0 0 6px var(--success);
+}
+.apiMissing .apiDot {
+  background: var(--warning);
+  animation: pulse 2s infinite;
+}

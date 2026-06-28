@@ -1,0 +1,26 @@
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--bg-primary);
+}
+
+.body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  height: calc(100vh - var(--header-height));
+}
+
+.main {
+  flex: 1;
+  overflow-y: auto;
+  background: var(--bg-primary);
+}
+
+@media (max-width: 720px) {
+  .body {
+    flex-direction: column;
+    height: auto;
+  }
+}
