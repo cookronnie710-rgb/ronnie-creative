@@ -1,0 +1,21 @@
+{
+  "name": "fliptracker",
+  "version": "1.0.0",
+  "description": "FlipTracker — offline deal calculator, inventory tracker and eBay listing generator for UK resellers.",
+  "private": true,
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://local_proxy@127.0.0.1:41729/git/cookronnie710-rgb/ronnie-creative"
+  },
+  "license": "ISC",
+  "devDependencies": {
+    "@babel/core": "^7.29.7",
+    "@babel/preset-react": "^7.29.7",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tailwindcss": "^3.4.19"
+  }
+}
