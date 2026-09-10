@@ -1,9 +1,17 @@
 name: CI
 
 on:
+  # Only the default branch on push. Branch pushes are covered by the
+  # pull_request trigger, and listening for both runs the whole suite twice
+  # on every push to an open PR.
   push:
-    branches: ['**']
+    branches: [main]
   pull_request:
+
+concurrency:
+  # A newer push supersedes the run in flight; no point finishing the old one.
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
