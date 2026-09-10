@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  # Only the default branch on push. Branch pushes are covered by the
+  # pull_request trigger, and listening for both runs the whole suite twice
+  # on every push to an open PR.
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  # A newer push supersedes the run in flight; no point finishing the old one.
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Build and test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # Keel has no runtime or build dependencies. Playwright is installed
+      # only so the browser-level tests run for real here; without it they
+      # skip themselves and the rest of the suite still passes.
+      - name: Install Playwright
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm test
+
+      # The build output is committed so the app can be opened straight from
+      # a clone or served by Pages. If a source change was pushed without
+      # rebuilding, say so rather than shipping a stale page.
+      - name: Check the committed build is up to date
+        run: |
+          if ! git diff --quiet -- index.html manifest.json sw.js icon.svg icon-192.png icon-512.png; then
+            echo "::error::The committed build is out of date. Run 'npm run build' and commit the result."
+            git diff --stat -- index.html manifest.json sw.js icon.svg icon-192.png icon-512.png
+            exit 1
+          fi
