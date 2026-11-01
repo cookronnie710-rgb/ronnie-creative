@@ -57,7 +57,14 @@ Skills, hooks and MCP servers can run code on your machine. Scout:
 * installs in **dry-run mode unless you pass `--yes`**,
 * flags script files, doesn't keep execute bits, refuses path traversal, caps size,
 * won't overwrite an existing skill without `--force`,
-* writes a `.scout-source` file recording where each skill came from.
+* writes a `.scout-source` file recording where each skill came from,
+* skips symlinks and enforces the size cap on bytes actually downloaded,
+* only accepts `OWNER/REPO` names and safe skill folder names (no `../`),
+* only ever sends your GitHub token to `https://api.github.com`,
+* strips terminal escape codes and escapes Markdown/HTML in repo text, so a hostile
+  description can't mess with your terminal or plant links/images in the report.
+
+The weekly workflow pins its GitHub Actions to exact commit SHAs.
 
 ### Weekly report
 

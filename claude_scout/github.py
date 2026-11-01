@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import os
 import shutil
 import subprocess
@@ -17,8 +18,18 @@ API = "https://api.github.com"
 DEFAULT_CACHE = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "claude-scout"
 
 
+REPO_RE = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})/[A-Za-z0-9._-]{1,100}$")
+
+
 class GitHubError(RuntimeError):
     pass
+
+
+def check_repo(full_name: str) -> str:
+    """Only accept OWNER/REPO, so user input can't steer requests to other API paths."""
+    if not REPO_RE.match(full_name) or full_name.split("/")[1] in (".", ".."):
+        raise GitHubError(f"Not a valid OWNER/REPO: {full_name!r}")
+    return full_name
 
 
 def find_token() -> str | None:
@@ -66,7 +77,9 @@ class GitHub:
             "User-Agent": "claude-scout",
             "X-GitHub-Api-Version": "2022-11-28",
         }
-        if self.token:
+        # Never send the token anywhere but the GitHub API itself.
+        if self.token and urllib.parse.urlsplit(url).netloc == "api.github.com" \
+                and url.startswith("https://"):
             headers["Authorization"] = f"Bearer {self.token}"
 
         req = urllib.request.Request(url, headers=headers)
@@ -100,20 +113,20 @@ class GitHub:
         return self.get("/search/repositories", params).get("items", [])
 
     def repo(self, full_name: str) -> dict:
-        return self.get(f"/repos/{full_name}")
+        return self.get(f"/repos/{check_repo(full_name)}")
 
     def tree(self, full_name: str, ref: str) -> list[dict]:
-        data = self.get(f"/repos/{full_name}/git/trees/{urllib.parse.quote(ref)}",
+        data = self.get(f"/repos/{check_repo(full_name)}/git/trees/{urllib.parse.quote(ref)}",
                         {"recursive": "1"})
         return data.get("tree", [])
 
     def readme(self, full_name: str) -> str:
         try:
-            return self.get(f"/repos/{full_name}/readme", raw=True).decode(errors="replace")
+            return self.get(f"/repos/{check_repo(full_name)}/readme", raw=True).decode(errors="replace")
         except GitHubError:
             return ""
 
     def file_bytes(self, full_name: str, path: str, ref: str) -> bytes:
         return self.get(
-            f"/repos/{full_name}/contents/{urllib.parse.quote(path)}", {"ref": ref}, raw=True
+            f"/repos/{check_repo(full_name)}/contents/{urllib.parse.quote(path)}", {"ref": ref}, raw=True
         )

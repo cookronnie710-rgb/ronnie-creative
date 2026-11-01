@@ -12,7 +12,7 @@ from . import __version__
 from .categories import CATEGORIES
 from .github import DEFAULT_CACHE, GitHub, GitHubError, find_token
 from .install import InstallError, install_skill
-from .scout import (detect_kinds, find_skills, render_markdown, render_table, search_all,
+from .scout import (clean, detect_kinds, find_skills, render_markdown, render_table, search_all,
                     search_free_text, to_hit)
 
 
@@ -76,14 +76,14 @@ def cmd_show(args) -> int:
     if skills:
         print(f"\nSkills ({len(skills)}):")
         for s in skills[: args.max_skills]:
-            print(f"  {s}")
+            print(f"  {clean(s)}")
         if len(skills) > args.max_skills:
             print(f"  … and {len(skills) - args.max_skills} more")
         print(f"\nInstall one: python -m claude_scout install {args.repo} <skill-dir>")
     if args.readme:
         text = gh.readme(args.repo)
         print("\n--- README (first 60 lines) ---")
-        print("\n".join(text.splitlines()[:60]))
+        print("\n".join(clean(line) for line in text.splitlines()[:60]))
     return 0
 
 

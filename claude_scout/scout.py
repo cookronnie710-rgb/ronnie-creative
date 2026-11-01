@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+import re
 from dataclasses import dataclass, asdict
 from datetime import datetime, timezone
 
@@ -12,6 +13,21 @@ from .github import GitHub
 # Words that suggest a repo is actually about Claude / agent tooling.
 RELEVANCE_TERMS = ("claude", "anthropic", "mcp", "skill", "agent", "subagent", "hook",
                    "slash command", "plugin", "claude.md", "model context protocol")
+
+
+_CONTROL = re.compile(r"[\x00-\x1f\x7f-\x9f]")
+_MD_SPECIAL = re.compile(r"([\\`*_{}\[\]()#+!|~])")
+
+
+def clean(text: str | None) -> str:
+    """Remove control characters (incl. ANSI escapes) from untrusted repo text."""
+    return _CONTROL.sub(" ", text or "").strip()
+
+
+def md_escape(text: str) -> str:
+    """Neutralise Markdown/HTML so repo descriptions can't inject links, images or tags."""
+    text = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    return _MD_SPECIAL.sub(r"\\\1", text)
 
 
 @dataclass
@@ -66,10 +82,10 @@ def to_hit(item: dict, category: str, now: datetime | None = None) -> Hit:
     return Hit(
         full_name=item["full_name"],
         url=item.get("html_url", f"https://github.com/{item['full_name']}"),
-        description=(item.get("description") or "").strip(),
+        description=clean(item.get("description")),
         stars=item.get("stargazers_count", 0) or 0,
-        pushed_at=(item.get("pushed_at") or "")[:10],
-        topics=item.get("topics", []) or [],
+        pushed_at=clean(item.get("pushed_at"))[:10],
+        topics=[clean(t) for t in item.get("topics", []) or []],
         archived=bool(item.get("archived")),
         license=lic.get("spdx_id") if isinstance(lic, dict) else None,
         category=category,
@@ -188,7 +204,7 @@ def render_markdown(results: dict[str, list[Hit]], generated: datetime | None = 
             continue
         out += ["| # | Repo | ⭐ | Updated | What it is |", "|---|---|---|---|---|"]
         for i, h in enumerate(hits, 1):
-            desc = _clip(h.description.replace("|", "\\|"), 120) or "—"
+            desc = md_escape(_clip(h.description, 120)) or "—"
             name = f"[{h.full_name}]({h.url})" + (" *(archived)*" if h.archived else "")
             out.append(f"| {i} | {name} | {h.stars:,} | {h.pushed_at} | {desc} |")
         out.append("")
